@@ -1,0 +1,949 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>pureFM: пройди тест, узнай свою роль в финтехе</title>
+<meta name="description" content="P2P это финтех. Пройди короткий тест на своём языке и узнай, на какую наёмную роль в high-risk payments ты уже тянешь и сколько она стоит на рынке.">
+<style>
+  :root {
+    /* база: холодный TG-dark (одобренная v1) */
+    --bg: #0E1116;
+    --panel: #161B22;
+    --panel-2: #1C222B;
+    --ink: #E9EDF3;
+    --muted: #9AA4B2;
+    --dim: #6C7683;
+    --line: rgba(233, 237, 243, 0.09);
+    --line-2: rgba(233, 237, 243, 0.16);
+
+    /* три цветовые роли + служебные */
+    --accent: #38C6F4;        /* действие: CTA, активные, прогресс, маркеры */
+    --accent-soft: #6AD6FF;   /* hover акцента */
+    --accent-2: #3FD6A3;      /* деньги/успех: вилки, выбранное, "ты здесь" */
+    --amber: #F0B35F;         /* только mono-caps лейблы: eyebrow, kicker, подписи */
+    --danger: #4C7DFF;        /* только второй glow фона, нигде больше */
+    --btn-ink: #04121B;       /* тёмный текст на акцентной кнопке */
+
+    /* легаси-алиасы, чтобы не переписывать каждое правило чистой базы */
+    --coral: var(--accent);
+    --coral-2: var(--accent-soft);
+    --green: var(--accent-2);
+    --green-2: var(--accent-2);
+
+    /* фирменные градиенты рельсов (casino method-wall, без логотипов) */
+    --grad-sbp: linear-gradient(135deg, #8CE84C, #32BFFF 54%, #8A5CFF);
+    --railink-sbp: #06110B;
+    --grad-pix: linear-gradient(135deg, #0ACFA4, #22F2D6);
+    --railink-pix: #031411;
+    --grad-usdt: linear-gradient(135deg, #27D191, #0F8E67);
+    --railink-usdt: #F2FFF8;
+    --grad-cards: linear-gradient(135deg, #F7F7F7, #D6DDE6);
+    --railink-cards: #11161D;
+    --grad-igaming: linear-gradient(135deg, #FFB020, #FF7A3D);
+    --railink-igaming: #1A0E02;
+
+    /* составные градиенты */
+    --grad-progress: linear-gradient(90deg, var(--accent), var(--accent-2));
+    --grad-payline: linear-gradient(90deg, var(--accent), var(--amber) 55%, var(--accent-2));
+
+    --radius: 10px;
+    --mono: "SFMono-Regular", "IBM Plex Mono", Menlo, Consolas, monospace;
+    --sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    /* casino-floor: два угловых glow (циан = действие, мятный = деньги) + инженерная сетка 72px */
+    background:
+      radial-gradient(circle at 16% 6%, rgba(56,198,244,.10), transparent 30%),
+      radial-gradient(circle at 85% 3%, rgba(63,214,163,.07), transparent 26%),
+      linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px),
+      var(--bg);
+    background-size: auto, auto, 72px 72px, 72px 72px, auto;
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; cursor: pointer; }
+  h1, h2, h3 { margin: 0; letter-spacing: -0.02em; }
+
+  .wrap { width: min(1060px, calc(100% - 40px)); margin: 0 auto; }
+
+  /* ---------- topbar ---------- */
+  .topbar {
+    position: sticky; top: 0; z-index: 40;
+    background: rgba(14, 17, 22, 0.86);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line);
+  }
+  .topbar-in {
+    width: min(1060px, calc(100% - 40px)); margin: 0 auto;
+    min-height: 60px; display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  }
+  .logo { display: flex; align-items: baseline; gap: 1px; font-weight: 800; font-size: 21px; letter-spacing: -0.03em; }
+  .logo .lchip {
+    width: 30px; height: 30px; border-radius: 7px; background: var(--accent); color: var(--btn-ink);
+    font-family: var(--mono); font-weight: 700; font-size: 13px; display: grid; place-items: center;
+    align-self: center; margin-right: 9px; box-shadow: 0 0 14px rgba(56,198,244,.40);
+  }
+  .logo .pure { color: var(--ink); font-weight: 300; }
+  .logo .fm { color: var(--accent); font-weight: 800; }
+  .logo .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); align-self: center; margin: 0 3px 0 4px; box-shadow: 0 0 10px rgba(56,198,244,.6); }
+  .topnav { display: flex; gap: 22px; align-items: center; font-size: 14px; color: var(--muted); }
+  .topnav a:hover { color: var(--ink); }
+  .topnav .chan { color: var(--coral); font-family: var(--mono); font-size: 13px; }
+  @media (max-width: 620px) { .topnav .lnk { display: none; } }
+
+  /* ---------- hero ---------- */
+  .hero { padding: 48px 0 32px; position: relative; }
+  /* cursor-spotlight: фиксированный слой во весь вьюпорт (гейт prefers-reduced-motion в JS).
+     Радиус постоянный в px, поэтому нет перекоса; слой без внутренних граней, поэтому нет обрезки. */
+  body::after {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: -1;
+    background: radial-gradient(circle 280px at var(--mx, -600px) var(--my, -600px), rgba(56,198,244,.11), transparent 72%);
+    opacity: 0; transition: opacity .35s ease;
+  }
+  body.lit::after { opacity: 1; }
+  .hero > * { position: relative; z-index: 1; }
+  .eyebrow {
+    font-family: var(--mono); font-size: 12px; letter-spacing: .2em; text-transform: uppercase;
+    color: var(--amber); display: flex; align-items: center; gap: 10px; margin-bottom: 22px;
+  }
+  .eyebrow::before { content: ""; width: 26px; height: 1px; background: var(--amber); }
+  .hero h1 {
+    font-size: clamp(32px, 6vw, 64px); font-weight: 800; line-height: .96; max-width: 17ch;
+  }
+  .hero h1 .hl { color: var(--accent); }
+  .hero .lead { margin: 24px 0 0; font-size: clamp(16px, 2.2vw, 19px); color: var(--muted); max-width: 50ch; }
+  .hero .lead b { color: var(--ink); font-weight: 600; }
+
+  .cta-start { margin-top: 30px; display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 10px; padding: 15px 26px; border-radius: var(--radius);
+    font-weight: 650; font-size: 15px; border: 1px solid transparent; transition: transform .1s ease, background .15s ease, border-color .15s ease;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn-cta {
+    background: var(--accent); color: var(--btn-ink); border-color: var(--accent);
+    box-shadow: 0 0 0 1px rgba(56,198,244,.30), 0 12px 30px rgba(56,198,244,.26);
+  }
+  .btn-cta:hover { background: var(--accent-soft); }
+  .btn-ghost { background: transparent; color: var(--ink); border-color: var(--line-2); }
+  .btn-ghost:hover { border-color: var(--muted); }
+  .cta-note { font-family: var(--mono); font-size: 12px; color: var(--muted); letter-spacing: .04em; }
+  .cta-chan { font-family: var(--mono); font-size: 12px; color: var(--coral); letter-spacing: .04em; border-bottom: 1px solid transparent; }
+  .cta-chan:hover { border-bottom-color: var(--coral); }
+
+  /* ---------- rails: кассовый ряд (casino method-wall, градиентные бейджи) ---------- */
+  .rails { margin-top: 26px; }
+  .rails-eyebrow {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--dim); margin-bottom: 12px;
+  }
+  .rails-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .rail {
+    position: relative; overflow: hidden;
+    display: inline-flex; align-items: baseline; gap: 7px;
+    border: 0; border-radius: 999px; padding: 8px 14px;
+    font-family: var(--mono); font-weight: 800; font-size: 13px; letter-spacing: .02em;
+    background: var(--g); color: var(--gi);
+    box-shadow: 0 10px 26px rgba(0,0,0,.30);
+    transition: transform .14s ease;
+  }
+  .rail:hover { transform: translateY(-1px); }
+  .rail small { font-weight: 700; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; opacity: .72; }
+  /* лого-марки рельсов: упрощённые узнаваемые знаки, всё инлайн, без внешних файлов */
+  .rl {
+    align-self: center; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center;
+    height: 18px; min-width: 18px; border-radius: 50%; font-style: normal; overflow: hidden;
+    position: relative; z-index: 1;
+  }
+  .rl svg { display: block; }
+  .rl-chip { background: #fff; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); }
+  .rl-rect { border-radius: 4px; padding: 0 4px; }
+  .rl-visa { background: #fff; color: #1A1F71; font: italic 900 7px/1 var(--sans); letter-spacing: .05em; }
+  .rl-mir  { background: #fff; color: #0F754E; font: 800 8px/1 var(--sans); letter-spacing: .01em; }
+  .rl-blik { background: #000; color: #fff; font: 800 7.5px/1 var(--sans); letter-spacing: .04em; }
+  .rl-sepa { background: #10357F; color: #FFD617; font: 800 10px/1 var(--sans); }
+  .rl-usdt { background: #26A17B; color: #fff; font: 800 11px/1 var(--sans); box-shadow: inset 0 0 0 1px rgba(255,255,255,.28); }
+  .rl-spei { background: linear-gradient(90deg, #006847 0 33%, #F5F5F5 33% 67%, #CE1126 67% 100%); border-radius: 4px; width: 18px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); }
+  /* диагональный glare */
+  .rail::after {
+    content: ""; position: absolute; inset: auto -20% -50% -20%; height: 72%;
+    transform: rotate(-8deg);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.45), transparent);
+    opacity: .38; pointer-events: none;
+  }
+  @media (max-width: 480px) {
+    .rail { padding: 7px 12px; }
+    .rail small { display: none; }
+  }
+  .rails-seg { display: flex; align-items: center; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .rails-seg-lab {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--dim);
+  }
+  .seg {
+    font-family: var(--mono); font-size: 12px; color: var(--muted);
+    border: 1px solid var(--line-2); border-radius: 20px; padding: 5px 12px;
+    transition: color .14s ease, border-color .14s ease;
+  }
+  .seg:hover { color: var(--accent); border-color: var(--accent); }
+  .seg-hot { background: var(--grad-igaming); color: var(--railink-igaming); border-color: transparent; font-weight: 800; }
+  .seg-hot:hover { color: var(--railink-igaming); border-color: transparent; }
+
+  /* ---------- market band (signature: business, not radio) ---------- */
+  .market {
+    margin-top: 24px;
+    background:
+      radial-gradient(circle at 88% 12%, rgba(56,198,244,.06), transparent 32%),
+      var(--panel);
+    border: 1px solid var(--line-2); border-radius: var(--radius);
+    padding: 20px 24px 22px;
+  }
+  .market-head { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+  .market-title { font-family: var(--mono); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--dim); }
+  .market-title::before {
+    content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent-2); box-shadow: 0 0 12px var(--accent-2); margin-right: 8px; vertical-align: 1px;
+  }
+  .market-hint { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .market-hint b { color: var(--accent-2); }
+
+  .band { position: relative; height: 118px; margin-top: 22px; }
+  /* payline: от входа (розовый) к деньгам (мята) */
+  .band-track { position: absolute; left: 0; right: 0; top: 11px; height: 8px; border-radius: 999px;
+    background: var(--grad-payline); box-shadow: 0 0 22px rgba(56,198,244,.25); }
+  .band-scale { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-between; font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); border-top: 1px solid var(--line); padding-top: 8px; }
+  .mk {
+    position: absolute; top: 0; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 7px;
+    background: none; border: none; padding: 0; color: var(--muted);
+  }
+  .mk .pt { width: 11px; height: 11px; border-radius: 50%; background: var(--panel-2); border: 2px solid var(--muted); transition: all .18s ease; }
+  .mk .lb { font-family: var(--mono); font-size: 10.5px; letter-spacing: .02em; white-space: nowrap; transition: color .18s ease; }
+  /* зарплата роли под названием: цифры из движка (role.salary), мята = деньги */
+  .mk .sal { font-family: var(--mono); font-size: 10px; font-weight: 700; color: var(--accent-2); white-space: nowrap; margin-top: -3px; }
+  .mk:hover .pt, .mk:focus-visible .pt { border-color: var(--coral); transform: scale(1.15); }
+  .mk:hover .lb, .mk:focus-visible .lb { color: var(--ink); }
+  .mk:focus-visible { outline: none; }
+  .mk.on .pt { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 12px rgba(56,198,244,.55); }
+  .mk.on .lb { color: var(--accent); }
+  .band-you {
+    position: absolute; top: -6px; transform: translateX(-50%); font-family: var(--mono); font-size: 10px;
+    letter-spacing: .1em; text-transform: uppercase; color: var(--coral); white-space: nowrap;
+    opacity: 0; transition: opacity .3s ease, left .5s cubic-bezier(.2,.7,.2,1);
+  }
+  .band-you.show { opacity: 1; }
+  /* приглашение к клику: точки ролей дважды мягко пульсируют после загрузки, только transform */
+  .mk { cursor: pointer; }
+  .mk .pt { animation: mkPulse 1.7s ease-in-out 2; }
+  @keyframes mkPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+  }
+  .band-tip { margin-top: 12px; font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; color: var(--dim); }
+  .band-tip b { color: var(--accent); font-weight: 700; }
+  .band-you::after { content: ""; display: block; width: 1px; height: 14px; background: var(--accent); margin: 4px auto 0; box-shadow: 0 0 8px rgba(56,198,244,.6); }
+  @media (max-width: 640px) {
+    .band { height: 108px; }
+    .mk .lb, .mk .sal { display: none; }
+    .mk.on .lb, .mk:focus-visible .lb { display: block; position: absolute; top: 18px; }
+    .mk.on .sal { display: block; position: absolute; top: 33px; }
+  }
+
+  /* ---------- quiz ---------- */
+  .quiz { padding: 8px 0 22px; scroll-margin-top: 72px; }
+  .quiz-card {
+    background:
+      radial-gradient(circle at 88% 12%, rgba(56,198,244,.07), transparent 34%),
+      var(--panel);
+    border: 1px solid var(--line-2); border-radius: var(--radius); overflow: hidden;
+    box-shadow: 0 24px 60px rgba(0,0,0,.32);
+  }
+  .quiz-top { padding: 16px 22px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+  .qcounter { font-family: var(--mono); font-size: 13px; color: var(--muted); letter-spacing: .08em; }
+  .qcounter::before {
+    content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent-2); box-shadow: 0 0 12px var(--accent-2); margin-right: 8px; vertical-align: 1px;
+  }
+  .qcounter b { color: var(--accent); }
+  .qtheme { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--amber); }
+  .qbar { height: 4px; background: var(--panel-2); position: relative; }
+  .qbar > span { position: absolute; left: 0; top: 0; bottom: 0; width: 6%; background: var(--grad-progress); box-shadow: 0 0 12px rgba(56,198,244,.35); transition: width .4s ease; }
+
+  .qbody { padding: 26px 22px 24px; }
+  .qkicker { font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--amber); }
+  .qtitle { font-size: clamp(19px, 3.2vw, 25px); font-weight: 700; margin-top: 12px; line-height: 1.24; }
+  #qTitle:focus, #resRole:focus { outline: none; }
+  .answers { margin-top: 20px; display: grid; gap: 10px; }
+  .ans {
+    text-align: left; width: 100%; background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 15px 16px; color: var(--ink); font-size: 15px; line-height: 1.4;
+    display: flex; gap: 13px; align-items: flex-start; transition: border-color .12s ease, background .12s ease;
+  }
+  .ans:hover { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--panel-2)); }
+  .ans:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .ans .key {
+    flex: 0 0 auto; width: 22px; height: 22px; border-radius: 5px; border: 1px solid var(--line-2);
+    display: grid; place-items: center; font-family: var(--mono); font-size: 12px; color: var(--muted); margin-top: 1px;
+  }
+  /* кольцо выбора: паттерн .is-active из routing-slot */
+  .ans.sel { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); box-shadow: 0 0 0 1px rgba(56,198,244,.25); }
+  .ans.sel .key { background: var(--accent); color: var(--btn-ink); border-color: var(--accent); }
+  .qactions { padding: 0 22px 22px; display: flex; gap: 10px; align-items: center; }
+  .qnext { margin-left: auto; padding: 10px 22px; font-size: 14px; }
+  .qnext[disabled] { opacity: .4; cursor: default; }
+  .ans.multi .key { border-radius: 4px; }
+  .qhint { font-family: var(--mono); font-size: 11px; color: var(--dim); margin-top: 14px; letter-spacing: .03em; }
+  .lnkbtn { background: none; border: none; color: var(--dim); font-family: var(--mono); font-size: 12px; letter-spacing: .05em; padding: 6px 8px; }
+  .lnkbtn:hover { color: var(--muted); }
+  .lnkbtn[disabled] { opacity: .35; cursor: default; }
+
+  /* ---------- result ---------- */
+  .result { padding: 8px 0 26px; scroll-margin-top: 72px; }
+  .res-card { background: var(--panel); border: 1px solid var(--line-2); border-radius: var(--radius); overflow: hidden; }
+  .res-band {
+    padding: 24px; border-bottom: 1px solid var(--line);
+    display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; flex-wrap: wrap;
+    background:
+      linear-gradient(160deg, rgba(56,198,244,.10), transparent 60%),
+      radial-gradient(circle at 90% 10%, rgba(56,198,244,.08), transparent 30%),
+      var(--panel);
+  }
+  .res-tag { font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--dim); }
+  .res-role { font-size: clamp(23px, 4.4vw, 34px); font-weight: 800; margin-top: 8px; line-height: 1.1; }
+  /* слот-reveal: три "барабана" защёлкиваются с overshoot и stagger 0/70/140ms.
+     Только transform/opacity, без blur. prefers-reduced-motion глушит глобально (конец style). */
+  @keyframes reelIn {
+    from { transform: translateY(-12px); opacity: 0; }
+    60%  { transform: translateY(2px);   opacity: 1; }
+    to   { transform: translateY(0);     opacity: 1; }
+  }
+  /* .snap остаётся как JS-хук, кривая переопределена на reel-язык */
+  .res-role.snap { animation: roleSnap 340ms cubic-bezier(.2,.7,.2,1) both; }
+  @keyframes roleSnap {
+    from { transform: translateY(-12px); opacity: 0; }
+    60%  { transform: translateY(2px);   opacity: 1; }
+    to   { transform: translateY(0);     opacity: 1; }
+  }
+  .res-band.deal .res-role  { animation: reelIn 340ms cubic-bezier(.2,.7,.2,1) both; }
+  .res-band.deal .res-meta  { animation: reelIn 340ms cubic-bezier(.2,.7,.2,1) both; animation-delay: 70ms; }
+  .res-band.deal .res-money { animation: reelIn 340ms cubic-bezier(.2,.7,.2,1) both; animation-delay: 140ms; }
+  .res-meta { display: inline-flex; align-items: center; gap: 10px; margin-top: 13px; font-family: var(--mono); font-size: 12px; color: var(--muted); letter-spacing: .04em; }
+  .res-meta .gpill { padding: 3px 11px; border: 1px solid var(--line-2); border-radius: 20px; color: var(--ink); letter-spacing: .1em; text-transform: uppercase; }
+  .res-money { text-align: right; font-family: var(--mono); min-width: 120px; }
+  .res-money .lab { display: block; font-size: 11px; letter-spacing: .14em; color: var(--amber); text-transform: uppercase; }
+  .res-money .val { font-size: clamp(30px, 6vw, 44px); font-weight: 900; color: var(--accent-2); line-height: 1.05; text-shadow: 0 0 20px rgba(63,214,163,.28); }
+  .res-money .per { font-size: 11px; color: var(--dim); letter-spacing: .08em; }
+
+  .res-body { padding: 24px; }
+  .res-summary { font-size: clamp(15px, 2.1vw, 17px); color: var(--ink); max-width: 64ch; }
+  .res-note { margin-top: 10px; color: var(--muted); font-size: 14px; }
+  .res-grid { margin-top: 22px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 640px) { .res-grid { grid-template-columns: 1fr; } }
+  .res-mini { background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
+  .res-mini h4 { margin: 0 0 10px; font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); font-weight: 500; }
+  .res-mini ul { margin: 0; padding-left: 18px; color: var(--ink); font-size: 14px; }
+  .res-mini li { margin: 6px 0; }
+  .res-mini .search { font-family: var(--mono); font-size: 13px; color: var(--accent-2); line-height: 1.55; }
+
+  .res-cta { margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--line); }
+  .res-cta .push { font-size: 15px; color: var(--muted); max-width: 60ch; }
+  .res-cta .push b { color: var(--ink); }
+  .res-cta-row { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .res-again { margin-left: auto; }
+
+  /* vacancy example card (concrete proof) */
+  .res-vac { margin-top: 22px; }
+  .res-vac-h { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); margin-bottom: 12px; }
+  .vac-card { border: 1px solid var(--line-2); border-radius: var(--radius); background: var(--panel-2); padding: 18px 20px; box-shadow: 0 16px 40px rgba(0,0,0,.28); }
+  .vac-top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-family: var(--mono); font-size: 12px; }
+  .vac-org { color: var(--accent); letter-spacing: .03em; }
+  .vac-loc { color: var(--dim); }
+  .vac-sal { margin-left: auto; color: var(--accent-2); font-weight: 800; font-size: 15px; }
+  .vac-title { font-size: 18px; font-weight: 700; margin: 12px 0 2px; }
+  .vac-reqs { margin: 12px 0 0; padding-left: 18px; color: var(--muted); font-size: 14px; }
+  .vac-reqs li { margin: 5px 0; }
+  .vac-foot { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--dim); display: flex; align-items: center; gap: 8px; }
+  .vac-badge { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); border: 1px solid rgba(56,198,244,.45); border-radius: 20px; padding: 2px 9px; }
+  @media (max-width: 480px) { .vac-sal { margin-left: 0; width: 100%; } }
+
+  /* ---------- sections ---------- */
+  .block { padding: 46px 0; border-top: 1px solid var(--line); }
+  .block-head { max-width: 62ch; margin-bottom: 24px; }
+  .block-head .eyebrow { margin-bottom: 14px; }
+  .block-head h2 { font-size: clamp(22px, 3.8vw, 31px); font-weight: 800; line-height: 1.12; }
+  .block-head p { margin: 12px 0 0; color: var(--muted); font-size: 16px; }
+
+  /* level filter */
+  .filter { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+  .chip {
+    font-family: var(--mono); font-size: 12px; letter-spacing: .04em; padding: 8px 14px; border-radius: 20px;
+    border: 1px solid var(--line-2); background: transparent; color: var(--muted); transition: all .14s ease;
+  }
+  .chip:hover { color: var(--ink); border-color: var(--muted); }
+  .chip.on { background: var(--accent); color: var(--btn-ink); border-color: var(--accent); box-shadow: 0 0 14px rgba(56,198,244,.35); }
+
+  /* roles accordion (interactive) */
+  .roles { display: grid; gap: 8px; }
+  .role { border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); overflow: hidden; }
+  .role[open] { border-color: color-mix(in srgb, var(--accent) 35%, var(--line-2)); }
+  .role.hide { display: none; }
+  .role-sum {
+    list-style: none; cursor: pointer; padding: 16px 18px; display: grid;
+    grid-template-columns: 1fr auto 22px; gap: 16px; align-items: center;
+  }
+  .role-sum::-webkit-details-marker { display: none; }
+  .role-sum .rt h3 { font-size: 16px; font-weight: 700; }
+  .role-sum .rt .rlvl { font-size: 10px; color: var(--dim); letter-spacing: .12em; text-transform: uppercase; margin-top: 3px; display: inline-block; }
+  .role-sum .rsal { font-family: var(--mono); font-weight: 800; color: var(--accent-2); font-size: 16px; white-space: nowrap; }
+  .role-sum .mk-plus { font-family: var(--mono); color: var(--accent); font-size: 18px; text-align: center; transition: transform .2s ease; }
+  .role[open] .mk-plus { transform: rotate(45deg); }
+  .role-detail { padding: 0 18px 18px; }
+  .role-detail p { margin: 0 0 12px; color: var(--muted); font-size: 14.5px; line-height: 1.55; }
+  .rterms-h { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); margin-bottom: 10px; }
+  .rterms { display: flex; flex-wrap: wrap; gap: 7px; }
+  .rterm { font-family: var(--mono); font-size: 12.5px; color: var(--ink); border: 1px solid var(--line-2); background: var(--bg); border-radius: 20px; padding: 5px 12px; transition: border-color .12s ease, color .12s ease; }
+  .rterm:hover { border-color: var(--accent); color: var(--accent); }
+  @media (max-width: 560px) {
+    .role-sum { grid-template-columns: 1fr auto; grid-template-areas: "rt plus" "sal sal"; row-gap: 8px; }
+    .role-sum .rt { grid-area: rt; }
+    .role-sum .mk-plus { grid-area: plus; }
+    .role-sum .rsal { grid-area: sal; }
+  }
+
+  /* bridges */
+  .bridges { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+  .bridge { background: var(--panel); padding: 16px 18px; display: grid; grid-template-columns: 1fr 28px auto; gap: 14px; align-items: center; transition: background .14s ease; }
+  .bridge:hover { background: color-mix(in srgb, var(--accent) 4%, var(--panel)); }
+  .bridge .from { color: var(--ink); font-size: 15px; }
+  .bridge .arr { color: var(--accent); font-family: var(--mono); text-align: center; }
+  .bridge .to { font-family: var(--mono); font-size: 14px; color: var(--accent-2); font-weight: 700; white-space: nowrap; }
+  @media (max-width: 560px) {
+    .bridge { grid-template-columns: 1fr; gap: 6px; }
+    .bridge .arr { text-align: left; }
+  }
+
+  /* faq */
+  .faq details { border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); margin-bottom: 10px; overflow: hidden; }
+  .faq details[open] { border-color: color-mix(in srgb, var(--accent) 30%, var(--line)); }
+  .faq summary { list-style: none; cursor: pointer; padding: 16px 18px; font-weight: 600; font-size: 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary .mk2 { font-family: var(--mono); color: var(--accent); font-size: 18px; transition: transform .2s ease; }
+  .faq details[open] summary .mk2 { transform: rotate(45deg); }
+  .faq .fa { padding: 0 18px 18px; color: var(--muted); font-size: 15px; line-height: 1.6; max-width: 66ch; }
+
+  /* final */
+  .final { padding: 52px 0 30px; border-top: 1px solid var(--line); }
+  .final-box {
+    /* мини casino-floor: единственное место, где живёт --danger (второй glow) */
+    background:
+      radial-gradient(circle at 14% 20%, rgba(56,198,244,.16), transparent 40%),
+      radial-gradient(circle at 86% 10%, rgba(76,125,255,.10), transparent 38%),
+      linear-gradient(180deg, var(--panel), var(--bg));
+    border: 1px solid var(--line-2); border-radius: var(--radius); padding: 30px;
+    box-shadow: 0 24px 70px rgba(0,0,0,.30);
+    display: flex; justify-content: space-between; align-items: center; gap: 22px; flex-wrap: wrap;
+  }
+  .final-box h2 { font-size: clamp(20px, 3.4vw, 28px); font-weight: 800; max-width: 24ch; }
+  .final-box p { margin: 10px 0 0; color: var(--muted); font-size: 15px; max-width: 46ch; }
+
+  .fineprint { color: var(--muted); font-size: 13px; line-height: 1.6; margin-top: 26px; max-width: 76ch; }
+  footer { padding: 30px 0 50px; }
+  footer .flogo { font-weight: 800; letter-spacing: -0.03em; }
+  footer .flogo .fm { color: var(--accent); }
+
+  .hidden { display: none !important; }
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: .01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: .01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="logo" href="#top" aria-label="pureFM"><span class="lchip" aria-hidden="true">FM</span><span class="pure">pure</span><span class="dot"></span><span class="fm">FM</span></a>
+    <nav class="topnav">
+      <a class="lnk" href="#roles">Роли</a>
+      <a class="lnk" href="#bridge">Переводы</a>
+      <a class="chan" href="https://t.me/pure_fm" target="_blank" rel="noopener">@pure_fm</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero wrap">
+    <div class="eyebrow">high-risk payments</div>
+    <h1>P2P это финтех. И ты уже часть финтеха, просто <span class="hl">ещё не назвал это так</span>.</h1>
+    <p class="lead">Пройди короткий тест. Узнай, на какую наёмную роль в high-risk ты уже тянешь, какой у тебя грейд и сколько это стоит на рынке. <b>Без сказок, честно с собой.</b></p>
+
+    <div class="cta-start">
+      <button class="btn btn-cta" id="startBtn">Пройти тест</button>
+      <span class="cta-note">16 вопросов на твоём языке, около двух минут</span>
+      <a class="cta-chan" href="https://t.me/pure_fm" target="_blank" rel="noopener">или сразу в канал @pure_fm</a>
+    </div>
+
+    <div class="rails">
+      <div class="rails-eyebrow">сети, в которых ты уже работаешь</div>
+      <div class="rails-row">
+        <span class="rail" style="--g:var(--grad-sbp); --gi:var(--railink-sbp)"><i class="rl rl-chip" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke-width="2.1" stroke-linecap="round"><path d="M4 2.8 L8.1 8" stroke="#665AF0"/><path d="M4 13.2 L8.1 8" stroke="#31B7FF"/><path d="M12 2.8 L7.9 8" stroke="#FFB020"/><path d="M12 13.2 L7.9 8" stroke="#7AD83F"/></svg></i>СБП<small>RU instant</small></span>
+        <span class="rail" style="--g:var(--grad-pix); --gi:var(--railink-pix)"><i class="rl rl-chip" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 16 16" fill="#32BCAD"><path d="M8 1.2 L10.6 3.8 L8 6.4 L5.4 3.8 Z"/><path d="M12.2 5.4 L14.8 8 L12.2 10.6 L9.6 8 Z"/><path d="M8 14.8 L5.4 12.2 L8 9.6 L10.6 12.2 Z"/><path d="M3.8 5.4 L6.4 8 L3.8 10.6 L1.2 8 Z"/></svg></i>PIX<small>BR instant</small></span>
+        <span class="rail" style="--g:var(--grad-usdt); --gi:var(--railink-usdt)"><i class="rl rl-usdt" aria-hidden="true">&#8366;</i>USDT TRC20<small>crypto</small></span>
+        <span class="rail" style="--g:var(--grad-cards); --gi:var(--railink-cards)"><i class="rl rl-rect rl-visa" aria-hidden="true">VISA</i>Visa<small>cards</small></span>
+        <span class="rail" style="--g:var(--grad-cards); --gi:var(--railink-cards)"><i class="rl" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 16 16"><circle cx="5.7" cy="8" r="4.5" fill="#EB001B"/><circle cx="10.3" cy="8" r="4.5" fill="#F79E1B"/><ellipse cx="8" cy="8" rx="1.8" ry="4" fill="#FF5F00"/></svg></i>Mastercard<small>cards</small></span>
+        <span class="rail" style="--g:var(--grad-cards); --gi:var(--railink-cards)"><i class="rl rl-rect rl-mir" aria-hidden="true">мир</i>Мир<small>RU cards</small></span>
+        <span class="rail" style="--g:var(--grad-cards); --gi:var(--railink-cards)"><i class="rl rl-sepa" aria-hidden="true">&euro;</i>SEPA<small>EU</small></span>
+        <span class="rail" style="--g:var(--grad-cards); --gi:var(--railink-cards)"><i class="rl rl-rect rl-blik" aria-hidden="true">blik</i>BLIK<small>PL</small></span>
+        <span class="rail" style="--g:var(--grad-cards); --gi:var(--railink-cards)"><i class="rl rl-spei" aria-hidden="true"></i>SPEI<small>MX</small></span>
+      </div>
+      <div class="rails-seg">
+        <span class="rails-seg-lab">сегменты</span>
+        <span class="seg seg-hot">iGaming</span><span class="seg">беттинг</span><span class="seg">крипто-процессинг</span>
+      </div>
+    </div>
+
+    <div class="market">
+      <div class="market-head">
+        <span class="market-title">Рынок наёмных ролей в high-risk</span>
+        <span class="market-hint">вилки от <b>$1к</b> до <b>$12к</b> в месяц</span>
+      </div>
+      <div class="band" id="band">
+        <div class="band-track"></div>
+        <div class="band-you" id="bandYou">ты здесь</div>
+        <div class="band-scale"><span>вход</span><span>среднее звено</span><span>топ</span></div>
+      </div>
+      <div class="band-tip">точки на шкале <b>кликабельны</b>: нажми роль, откроется её карточка</div>
+    </div>
+  </section>
+
+  <!-- QUIZ -->
+  <section class="quiz wrap hidden" id="quizSection">
+    <div class="quiz-card">
+      <div class="quiz-top">
+        <span class="qcounter" aria-live="polite">вопрос <b id="qNow">1</b> / <span id="qTotal">16</span></span>
+        <span class="qtheme" id="qTheme"></span>
+      </div>
+      <div class="qbar"><span id="qFill"></span></div>
+      <div class="qbody">
+        <div class="qkicker" id="qKicker"></div>
+        <h2 class="qtitle" id="qTitle" tabindex="-1"></h2>
+        <div class="answers" id="qAnswers"></div>
+      </div>
+      <div class="qactions">
+        <button class="lnkbtn" id="backBtn">назад</button>
+        <button class="lnkbtn" id="resetBtn">сбросить</button>
+        <button class="btn btn-cta qnext hidden" id="nextBtn">Далее</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESULT -->
+  <section class="result wrap hidden" id="resultSection">
+    <div class="res-card">
+      <div class="res-band">
+        <div>
+          <div class="res-tag">твой уровень</div>
+          <div class="res-role" id="resRole" tabindex="-1"></div>
+          <div class="res-meta"><span class="gpill" id="resGrade"></span><span id="resLevel"></span></div>
+        </div>
+        <div class="res-money">
+          <span class="lab">рыночная вилка</span>
+          <span class="val" id="resSalary"></span>
+          <span class="per">в месяц</span>
+        </div>
+      </div>
+      <div class="res-body">
+        <p class="res-summary" id="resSummary"></p>
+        <p class="res-note" id="resNote"></p>
+        <div class="res-grid">
+          <div class="res-mini">
+            <h4>Что добить</h4>
+            <ul id="resGaps"></ul>
+          </div>
+          <div class="res-mini">
+            <h4>Что искать в вакансиях</h4>
+            <p class="search" id="resSearch"></p>
+          </div>
+        </div>
+        <div class="res-vac">
+          <!-- TODO (nice): дожать .vac-card под вид джоб-борда, грейд как мини-шкала через .band/.mk, 2-3 мини-глифа рельсов роли в .vac-foot. Additive, engine.js не трогать. -->
+          <div class="res-vac-h">Как выглядит вакансия такого типа</div>
+          <div class="vac-card">
+            <div class="vac-top">
+              <span class="vac-badge">пример</span>
+              <span class="vac-org" id="vacOrg"></span>
+              <span class="vac-loc">чаще удалёнка, СНГ</span>
+              <span class="vac-sal" id="vacSal"></span>
+            </div>
+            <div class="vac-title" id="vacTitle"></div>
+            <ul class="vac-reqs" id="vacReqs"></ul>
+            <div class="vac-foot">Живые вакансии ищи по запросам выше и в канале.</div>
+          </div>
+        </div>
+        <div class="res-cta">
+          <p class="push">Хочешь предметный разбор этой роли и как в неё зайти с твоим опытом? Забери в боте, он сохранит твой результат и я вернусь с деталями. <b>Или сразу подпишись на канал.</b></p>
+          <div class="res-cta-row">
+            <a class="btn btn-cta" id="botCta" href="https://t.me/pure_fm" target="_blank" rel="noopener">Забрать разбор</a>
+            <a class="btn btn-ghost" href="https://t.me/pure_fm" target="_blank" rel="noopener">Подписаться на @pure_fm</a>
+            <button class="lnkbtn res-again" id="againBtn">пройти заново</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ROLES (interactive) -->
+  <section class="block wrap" id="roles">
+    <div class="block-head">
+      <div class="eyebrow">карта ролей</div>
+      <h2>Как назвать в найме то, что ты уже делал</h2>
+      <p>Реальные наёмные роли в high-risk payments: PSP, мерчи, iGaming. Нажми на любую, чтобы посмотреть что это и чем она живёт. Вилки сверены с каналом на 2026-07, это ориентир, не оффер.</p>
+    </div>
+    <div class="filter" id="filter">
+      <button class="chip on" data-lvl="all">все</button>
+      <button class="chip" data-lvl="вход">вход</button>
+      <button class="chip" data-lvl="среднее">среднее звено</button>
+      <button class="chip" data-lvl="топ">топ</button>
+    </div>
+    <div class="roles" id="rolesList"></div>
+  </section>
+
+  <!-- BRIDGES -->
+  <section class="block wrap" id="bridge">
+    <div class="block-head">
+      <div class="eyebrow">переводы</div>
+      <h2>Одно и то же, разными словами</h2>
+      <p>Твой опыт уже описан как вакансия. Слева то, что ты делал. Справа как это зовут в найме.</p>
+    </div>
+    <div class="bridges">
+      <div class="bridge"><span class="from">Закончил смену, посчитал кассу, свёл кто сколько прислал</span><span class="arr">&rarr;</span><span class="to">Финансовый менеджер</span></div>
+      <div class="bridge"><span class="from">Знаешь какой банк сегодня живёт и куда перекинуть траф</span><span class="arr">&rarr;</span><span class="to">Payment Manager</span></div>
+      <div class="bridge"><span class="from">Греешь карты, читаешь связки, знаешь где сядет ФЗ</span><span class="arr">&rarr;</span><span class="to">Risk / Antifraud</span></div>
+      <div class="bridge"><span class="from">Видишь где грязный тезер и как проверить материал</span><span class="arr">&rarr;</span><span class="to">Compliance / KYC</span></div>
+      <div class="bridge"><span class="from">Ведёшь десяток площадок и дроповодов разом</span><span class="arr">&rarr;</span><span class="to">Key Account Manager</span></div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="block wrap faq">
+    <div class="block-head">
+      <div class="eyebrow">три вопроса, которые задают чаще всего</div>
+      <h2>Без тумана</h2>
+    </div>
+    <details>
+      <summary>Это вообще легально <span class="mk2">+</span></summary>
+      <div class="fa">Наёмная роль в PSP, у мерча или в iGaming это обычная работа по договору. Ты продаёшь навык, а не схему. Опыт описывается языком функций, без серых деталей и без имён площадок.</div>
+    </details>
+    <details>
+      <summary>Нужен ли депозит или вложения <span class="mk2">+</span></summary>
+      <div class="fa">Нет. Это не «занеси и крути». Наёмная роль это зарплата тебе, а не страховой от тебя. Если где-то просят вложить деньги за трудоустройство, это не сюда.</div>
+    </details>
+    <details>
+      <summary>Надо ли светить лицо и документы <span class="mk2">+</span></summary>
+      <div class="fa">По-разному. Часть ролей это удалёнка и договор без офиса. Где-то попросят созвон и документы, где-то нет. Это решается на конкретной вакансии, а не на входе. В канале про это тоже есть.</div>
+    </details>
+  </section>
+
+  <!-- FINAL -->
+  <section class="final wrap">
+    <div class="final-box">
+      <div>
+        <h2>Прошёл тест, увидел уровень. Дальше по делу.</h2>
+        <p>В канале разборы ролей и вилок, карта наёмных ролей и живые вакансии high-risk со скринами.</p>
+      </div>
+      <a class="btn btn-cta" href="https://t.me/pure_fm" target="_blank" rel="noopener">Открыть @pure_fm</a>
+    </div>
+    <p class="fineprint">pureFM не работодатель и не кадровое агентство. Зарплатные вилки зависят от рынка, гео, английского, опыта и конкретной роли. Тест это ориентир, а не оффер и не гарантия трудоустройства.</p>
+  </section>
+</main>
+
+<footer class="wrap">
+  <span class="flogo"><span>pure</span><span class="fm">FM</span></span>
+</footer>
+
+<script src="engine.js"></script>
+<script>
+(function () {
+  'use strict';
+  var E = window.PUREFM;
+  if (!E) {
+    var sbf = document.getElementById('startBtn');
+    var ntf = document.querySelector('.cta-note');
+    if (sbf) { sbf.textContent = 'Написать в ЛС'; sbf.addEventListener('click', function () { window.open('https://t.me/PurefmPure', '_blank', 'noopener'); }); }
+    if (ntf) { ntf.textContent = 'тест не подгрузился, напиши в ЛС @PurefmPure'; }
+    console.error('engine.js не загрузился');
+    return;
+  }
+
+  var prefersReduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+  var LEAD_BOT = 'pure_fm_bot'; // placeholder: заменить на реальный @username лид-бота
+  var Q = E.QUESTIONS;
+  var total = Q.length;
+
+  // --- market band markers (clickable -> open role card) ---
+  var band = document.getElementById('band');
+  var bandYou = document.getElementById('bandYou');
+  E.ROLE_ORDER.forEach(function (key) {
+    var role = E.ROLES[key];
+    var b = document.createElement('button');
+    b.className = 'mk';
+    b.type = 'button';
+    b.style.left = role.pos + '%';
+    b.dataset.key = key;
+    b.setAttribute('aria-label', role.title + ', ' + role.salary);
+    b.innerHTML = '<span class="pt"></span><span class="lb">' + role.short + '</span><span class="sal">' + role.salary + '</span>';
+    b.addEventListener('click', function () { openRole(key); });
+    band.appendChild(b);
+  });
+  function markBand(activeKey) {
+    band.querySelectorAll('.mk').forEach(function (m) { m.classList.toggle('on', m.dataset.key === activeKey); });
+  }
+
+  // --- roles accordion ---
+  var rolesList = document.getElementById('rolesList');
+  E.ROLE_ORDER.forEach(function (key) {
+    var r = E.ROLES[key];
+    var d = document.createElement('details');
+    d.className = 'role';
+    d.dataset.key = key;
+    d.dataset.lvl = r.level;
+    d.innerHTML =
+      '<summary class="role-sum">' +
+        '<div class="rt"><h3>' + r.title + '</h3><span class="rlvl">' + r.level + '</span></div>' +
+        '<span class="rsal">' + r.salary + '</span>' +
+        '<span class="mk-plus">+</span>' +
+      '</summary>' +
+      '<div class="role-detail">' +
+        '<p>' + r.summary + '</p>' +
+        '<div class="rterms-h">на языке рынка</div>' +
+        '<div class="rterms">' + r.terms.map(function (t) { return '<span class="rterm">' + t + '</span>'; }).join('') + '</div>' +
+      '</div>';
+    rolesList.appendChild(d);
+  });
+  function openRole(key) {
+    var el = rolesList.querySelector('.role[data-key="' + key + '"]');
+    if (!el) return;
+    setLevel('all');
+    el.open = true;
+    markBand(key);
+    el.scrollIntoView({ behavior: prefersReduce.matches ? 'auto' : 'smooth', block: 'center' });
+  }
+
+  // --- level filter ---
+  var filter = document.getElementById('filter');
+  function setLevel(lvl) {
+    filter.querySelectorAll('.chip').forEach(function (c) { c.classList.toggle('on', c.dataset.lvl === lvl); });
+    rolesList.querySelectorAll('.role').forEach(function (el) {
+      el.classList.toggle('hide', !(lvl === 'all' || el.dataset.lvl === lvl));
+    });
+  }
+  filter.addEventListener('click', function (e) {
+    var c = e.target.closest('.chip');
+    if (c) setLevel(c.dataset.lvl);
+  });
+
+  // --- quiz state ---
+  var answers = new Array(total).fill(null);
+  var idx = 0;
+  var advanceTimer = null;
+
+  var quizSection = document.getElementById('quizSection');
+  var resultSection = document.getElementById('resultSection');
+  var qNow = document.getElementById('qNow');
+  var qTotal = document.getElementById('qTotal');
+  var qFill = document.getElementById('qFill');
+  var qKicker = document.getElementById('qKicker');
+  var qTitle = document.getElementById('qTitle');
+  var qAnswers = document.getElementById('qAnswers');
+  var qTheme = document.getElementById('qTheme');
+  var backBtn = document.getElementById('backBtn');
+  var resetBtn = document.getElementById('resetBtn');
+  var nextBtn = document.getElementById('nextBtn');
+  qTotal.textContent = total;
+
+  var LETTERS = ['A', 'B', 'C', 'D', 'E'];
+  var CODES = ['KeyA', 'KeyB', 'KeyC', 'KeyD', 'KeyE'];
+
+  function selected() {
+    var v = answers[idx];
+    if (v === null || v === undefined) return [];
+    return Array.isArray(v) ? v : [v];
+  }
+
+  function renderQuestion() {
+    var q = Q[idx];
+    var multi = !!q.multi;
+    var sel = selected();
+    qNow.textContent = idx + 1;
+    qFill.style.width = Math.min(100, ((idx + 1) / total) * 100) + '%';
+    qKicker.textContent = q.kicker;
+    qTitle.textContent = q.q;
+    qTheme.textContent = q.kicker + (multi ? ' · неск.' : '');
+    qAnswers.innerHTML = '';
+    q.a.forEach(function (ans, ai) {
+      var on = sel.indexOf(ai) >= 0;
+      var b = document.createElement('button');
+      b.className = 'ans' + (on ? ' sel' : '') + (multi ? ' multi' : '');
+      b.type = 'button';
+      b.innerHTML = '<span class="key">' + (multi ? (on ? '✓' : '') : LETTERS[ai]) + '</span><span>' + ans.t + '</span>';
+      b.addEventListener('click', function () { pick(ai); });
+      qAnswers.appendChild(b);
+    });
+    backBtn.disabled = idx === 0;
+    nextBtn.classList.toggle('hidden', !multi);
+    if (multi) nextBtn.disabled = sel.length === 0;
+    qTitle.focus({ preventScroll: true });
+  }
+
+  function advance() {
+    if (idx < total - 1) { idx++; renderQuestion(); }
+    else { showResult(); }
+  }
+
+  function pick(ai) {
+    var q = Q[idx];
+    if (q.multi) {
+      var arr = selected().slice();
+      var at = arr.indexOf(ai);
+      if (at >= 0) arr.splice(at, 1); else arr.push(ai);
+      answers[idx] = arr;
+      qAnswers.querySelectorAll('.ans').forEach(function (n, i) {
+        var on = arr.indexOf(i) >= 0;
+        n.classList.toggle('sel', on);
+        var k = n.querySelector('.key');
+        if (k) k.textContent = on ? '✓' : '';
+      });
+      nextBtn.disabled = arr.length === 0;
+      return;
+    }
+    // одиночный выбор: лок + автопереход
+    if (advanceTimer) return;
+    answers[idx] = ai;
+    qAnswers.querySelectorAll('.ans').forEach(function (n, i) { n.classList.toggle('sel', i === ai); });
+    advanceTimer = setTimeout(function () { advanceTimer = null; advance(); }, 170);
+  }
+
+  function startQuiz() {
+    quizSection.classList.remove('hidden');
+    resultSection.classList.add('hidden');
+    idx = 0;
+    advanceTimer = null;
+    renderQuestion();
+    quizSection.scrollIntoView({ behavior: prefersReduce.matches ? 'auto' : 'smooth', block: 'start' });
+  }
+
+  function resetQuiz() {
+    answers = new Array(total).fill(null);
+    idx = 0;
+    renderQuestion();
+  }
+
+  function showResult() {
+    var res = E.buildResult(answers);
+    var role = res.role;
+
+    var resRoleEl = document.getElementById('resRole');
+    resRoleEl.textContent = role.title;
+    // сигнатурный snap-reveal роли: снимаем класс, форсим reflow, вешаем заново,
+    // чтобы анимация проигрывалась и на «пройти заново». Только transform/opacity.
+    resRoleEl.classList.remove('snap');
+    void resRoleEl.offsetWidth;
+    resRoleEl.classList.add('snap');
+    // слот-reveal: три "барабана" (.res-role/.res-meta/.res-money) защёлкиваются со stagger.
+    // remove -> reflow -> add, чтобы перезапускалось на "пройти заново".
+    var rb = document.querySelector('.res-band');
+    if (rb) {
+      rb.classList.remove('deal');
+      void rb.offsetWidth;
+      rb.classList.add('deal');
+    }
+    document.getElementById('resGrade').textContent = res.grade.label;
+    document.getElementById('resLevel').textContent = 'уровень: ' + role.level;
+    document.getElementById('resSalary').textContent = role.salary;
+    document.getElementById('resSummary').textContent = role.summary;
+    document.getElementById('resNote').textContent = res.grade.note;
+
+    var gaps = document.getElementById('resGaps');
+    gaps.innerHTML = '';
+    role.gaps.forEach(function (g) {
+      var li = document.createElement('li'); li.textContent = g; gaps.appendChild(li);
+    });
+    document.getElementById('resSearch').textContent = role.search;
+
+    // карточка-пример вакансии такого типа (без реальных работодателей)
+    document.getElementById('vacOrg').textContent = role.org;
+    document.getElementById('vacSal').textContent = role.salary;
+    document.getElementById('vacTitle').textContent = role.title;
+    var vr = document.getElementById('vacReqs');
+    vr.innerHTML = '';
+    role.reqs.forEach(function (q) { var li = document.createElement('li'); li.textContent = q; vr.appendChild(li); });
+
+    // лид-бот: зашиваем код результата в deep-link start (только роль_грейд, без PII)
+    document.getElementById('botCta').href = 'https://t.me/' + LEAD_BOT + '?start=' + res.roleKey + '_' + res.grade.key;
+
+    quizSection.classList.add('hidden');
+    resultSection.classList.remove('hidden');
+
+    // highlight the role on the market band + show "ты здесь"
+    markBand(res.roleKey);
+    bandYou.style.left = role.pos + '%';
+    bandYou.classList.add('show');
+
+    resultSection.scrollIntoView({ behavior: prefersReduce.matches ? 'auto' : 'smooth', block: 'start' });
+    document.getElementById('resRole').focus({ preventScroll: true });
+  }
+
+  document.getElementById('startBtn').addEventListener('click', startQuiz);
+  backBtn.addEventListener('click', function () { if (!advanceTimer && idx > 0) { idx--; renderQuestion(); } });
+  resetBtn.addEventListener('click', resetQuiz);
+  nextBtn.addEventListener('click', function () { if (Q[idx].multi && selected().length > 0) advance(); });
+  document.getElementById('againBtn').addEventListener('click', function () {
+    answers = new Array(total).fill(null);
+    startQuiz();
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (quizSection.classList.contains('hidden')) return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    var q = Q[idx];
+    var i = CODES.indexOf(e.code);
+    if (i >= 0 && i < q.a.length) { pick(i); return; }
+    if (e.key === 'Enter' && q.multi && selected().length > 0) { advance(); return; }
+    if (e.key === 'ArrowLeft' && !advanceTimer && idx > 0) { idx--; renderQuestion(); }
+  });
+
+  // --- cursor-follow spotlight: фиксированный слой во весь вьюпорт, координаты в px.
+  //     Радиус постоянный (нет перекоса), слой без граней (нет обрезки). rAF-throttle.
+  if (!prefersReduce.matches) {
+    var spotRAF = null, spotX = -600, spotY = -600;
+    document.addEventListener('mousemove', function (e) {
+      spotX = e.clientX;
+      spotY = e.clientY;
+      if (spotRAF) return;
+      spotRAF = requestAnimationFrame(function () {
+        spotRAF = null;
+        document.body.style.setProperty('--mx', spotX + 'px');
+        document.body.style.setProperty('--my', spotY + 'px');
+        document.body.classList.add('lit');
+      });
+    });
+    document.documentElement.addEventListener('mouseleave', function () {
+      document.body.classList.remove('lit');
+    });
+  }
+})();
+</script>
+</body>
+</html>
